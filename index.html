@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoinMarketCap</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+</head>
+<body>
+    <div class="row py-3 mx-auto col-md-10">
+        <div class="col-md-2"><img src="coin.jpg" alt="coin" class="align-self-center mr-3" width="60" height="60"></div>
+        <div class="col-md-8 mx-auto"><h3>Tabela de Criptomoedas da CoinMarketCap</h3></div>
+    </div>
+    <div id="coins"></div>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+
+        consulta_moedas(0, 7);
+
+        function avancar(inicio,limite, qtd_data, direction){
+            if(direction > 0 && ((limite + direction) <= qtd_data)){
+                inicio = limite;
+                limite = (limite + direction);
+            } else if((limite + direction) >= 0){
+                inicio = inicio + direction;
+                limite = inicio + (-1*direction);
+            }
+            consulta_moedas(inicio, limite);
+        }
+        
+        function consulta_moedas(inicio, limite){
+
+            //api key
+            let apikey = {
+                key: 'ad5d8c3f-c516-4873-8e48-9ac65b1e3cec'
+            }
+            //Requisição do tipo fetch
+            fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/map?CMC_PRO_API_KEY=${apikey.key}`)
+            .then((response) => {
+                if(!response.ok) throw new Error(`Erro ao requisitar a requisição, status: ${response.status}`)
+                return response.json();
+                })
+            .then((api) => {
+                    console.log(api);
+                    var texto = "";
+                    let i = inicio;
+                    let j = limite;
+                    texto = texto + `
+                    <container class="row mx-auto col-md-10" >
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th scope="col">Nível de rank</th>
+                                <th scope="col">Nome</th>
+                                <th scope="col">Sigla</th>
+                                <th scope="col">Primeiro histórico</th>
+                            </tr>
+                            </thead>`;
+                        
+                    for(i; i < j; i++){
+                        
+                        primeira_data = api.data[i].first_historical_data.split('-')
+                        ano = primeira_data[0]
+                        mes = primeira_data[1]
+                        dia = primeira_data[2][0]+primeira_data[2][1]
+                        primeira_data = `${dia}/${mes}/${ano}`
+
+                        texto = texto + `
+                        <tbody>
+                        <tr>
+                            <th scope="row">${api.data[i].rank}</th>
+                            <td>${api.data[i].name}</td>
+                            <td>${api.data[i].symbol}</td>
+                            <td>${primeira_data}</td>
+                        </tr>
+                        </tbody>`;
+                    }
+                    
+                    texto = texto + `
+                    </table>
+                    <nav aria-label="Navegação de página exemplo">
+                    <ul class="pagination">
+                        <li class="page-item"><a class="page-link" href="#" onclick="avancar(${inicio},${limite},${api.data.length},-7);">Anterior</a></li>
+                        <li class="page-item"><a class="page-link" href="#" onclick="avancar(${inicio},${limite},${api.data.length},7);">Próximo</a></li>
+                    </ul>
+                    </nav>
+                    </container>`;
+                    document.getElementById('coins').innerHTML = texto;
+                })
+            .catch((error) => {
+                console.error(error.message)
+            });
+
+        }
+
+    </script>
+</body>
+</html>
